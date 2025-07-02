@@ -3,6 +3,23 @@ import pygame
 import os
 import random
 import sys
+import atexit
+
+# --- Single Instance Check ---
+LOCK_FILE = os.path.join(os.path.expanduser("~"), "auramixer.lock")
+
+if os.path.exists(LOCK_FILE):
+    print("Another instance of Auramixer is already running.")
+    sys.exit(1)
+
+def cleanup_lock_file():
+    if os.path.exists(LOCK_FILE):
+        os.remove(LOCK_FILE)
+
+with open(LOCK_FILE, "w") as f:
+    f.write(str(os.getpid()))
+atexit.register(cleanup_lock_file)
+
 
 # Initialize Pygame
 pygame.init()
@@ -29,12 +46,15 @@ show_text = False
 # --- Asset Loading ---
 def get_absolute_path(relative_path):
     """Get the absolute path to a resource, accommodating PyInstaller's temporary folder."""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundle, the PyInstaller bootloader
+        # extends the sys module by a flag frozen=True and sets the app 
+        # path into variable _MEIPASS'.
+        application_path = os.path.dirname(sys.executable)
+    else:
+        application_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(application_path, relative_path)
 
 def scale_and_crop_image(original_image):
     img_aspect = original_image.get_width() / original_image.get_height()
