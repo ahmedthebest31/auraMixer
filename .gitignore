@@ -1,0 +1,83 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.hypothesis/
+
+# IDE settings
+.idea/
+.vscode/
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Temporary media folder
+/tt/
+
+# --- Auramixer Specific --- #
+# The following lines ignore the *contents* of the media folders, 
+# but not the folders themselves. This is useful to avoid committing large
+# media files to Git. You can add an empty file named ".gitkeep" inside
+# each of these folders to ensure the empty directories are tracked.
+
+# Uncomment the lines below if you want to ignore media files:
+ /backgrounds/*
+/backgrounds/.gitkeep
+/effects/*
+/effects/.gitkeep
+/music/*
+/music/.gitkeep
+documents/
+
+
+# help files 
+program_explanation_en.html
+program_explanation_ar.html
+program_explanation.html
+code_explanation.txt
