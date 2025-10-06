@@ -224,7 +224,6 @@ def run_main_program(screen, assets):
 
     # --- Screen & Font ---
     SCREEN_WIDTH, SCREEN_HEIGHT = screen.get_size()
-    font = pygame.font.Font(None, 36)
     
     # --- UI State ---
     show_text = False
@@ -273,6 +272,56 @@ def run_main_program(screen, assets):
         pygame.mixer.music.fadeout(2000)
         pygame.mixer.stop() # Stops all sound effects immediately
 
+    # --- Help Screen ---
+    def draw_help_screen(surface):
+        # Define fonts for high-contrast text
+        title_font = pygame.font.Font(None, 52)
+        text_font = pygame.font.Font(None, 34)
+        white = (255, 255, 255)
+        
+        help_items = [
+            ("Auramixer Controls", title_font),
+            ("", text_font), # Spacer
+            ("--- General ---", text_font),
+            ("SHIFT: Toggle this help", text_font),
+            ("ESC: Quit Program", text_font),
+            ("R: Reload (on media error screen)", text_font),
+            ("", text_font),
+            ("--- Audio Control ---", text_font),
+            ("1-0 / Numpad 1-0: Play Music Track", text_font),
+            ("A-Z: Play Sound Effect", text_font),
+            ("SPACE: Stop All Music & Effects", text_font),
+            ("UP/DOWN Arrow: Adjust Music Volume", text_font),
+            ("LEFT/RIGHT Arrow: Adjust Effect Volume", text_font),
+        ]
+        
+        # Create rendered text surfaces
+        rendered_lines = [font.render(text, True, white) for text, font in help_items]
+        
+        # Calculate dimensions for the background panel
+        padding = 25
+        max_width = max(line.get_width() for line in rendered_lines)
+        total_height = sum(line.get_height() for line in rendered_lines)
+        
+        panel_width = max_width + padding * 2
+        panel_height = total_height + padding * 2
+        
+        # Create a semi-transparent background surface
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((0, 0, 0, 180)) # Black, 70% opaque
+        
+        # Blit text onto the panel
+        current_y = padding
+        for line in rendered_lines:
+            line_x = (panel_width - line.get_width()) // 2
+            panel.blit(line, (line_x, current_y))
+            current_y += line.get_height()
+            
+        # Blit the panel onto the main screen
+        panel_x = (surface.get_width() - panel_width) // 2
+        panel_y = (surface.get_height() - panel_height) // 2
+        surface.blit(panel, (panel_x, panel_y))
+
     # --- Main Loop ---
     running = True
     while running:
@@ -288,20 +337,27 @@ def run_main_program(screen, assets):
                     show_text = not show_text
                 elif pygame.K_a <= event.key <= pygame.K_z:
                     play_effect(event.key)
+                # Number row keys
                 elif pygame.K_1 <= event.key <= pygame.K_9:
                     play_music(event.key - pygame.K_1)
                 elif event.key == pygame.K_0:
                     play_music(9) # 10th track
+                # Numpad keys
+                elif pygame.K_KP1 <= event.key <= pygame.K_KP9:
+                    play_music(event.key - pygame.K_KP1)
+                elif event.key == pygame.K_KP0:
+                    play_music(9) # 10th track
+                # Volume controls
                 elif event.key == pygame.K_UP:
-                    music_volume = min(1.0, music_volume + 0.1)
+                    music_volume = min(1.0, round(music_volume + 0.1, 1))
                     pygame.mixer.music.set_volume(music_volume)
                 elif event.key == pygame.K_DOWN:
-                    music_volume = max(0.0, music_volume - 0.1)
+                    music_volume = max(0.0, round(music_volume - 0.1, 1))
                     pygame.mixer.music.set_volume(music_volume)
                 elif event.key == pygame.K_RIGHT:
-                    effect_volume = min(1.0, effect_volume + 0.1)
+                    effect_volume = min(1.0, round(effect_volume + 0.1, 1))
                 elif event.key == pygame.K_LEFT:
-                    effect_volume = max(0.0, effect_volume - 0.1)
+                    effect_volume = max(0.0, round(effect_volume - 0.1, 1))
             
             if event.type == BACKGROUND_CHANGE_EVENT:
                 current_bg_index = (current_bg_index + 1) % len(scaled_backgrounds)
@@ -323,21 +379,7 @@ def run_main_program(screen, assets):
 
         # --- Help Text ---
         if show_text:
-            help_text = [
-                "Auramixer Controls:",
-                "ESC: Quit",
-                "1-0: Play Music Track",
-                "A-Z: Play Sound Effect",
-                "SPACE: Stop All Music & Effects",
-                "UP/DOWN: Music Volume",
-                "LEFT/RIGHT: Effect Volume",
-                "SHIFT: Toggle This Help"
-            ]
-            y_pos = 20
-            for line in help_text:
-                text_surf = font.render(line, True, (255, 255, 0), (0, 0, 0))
-                screen.blit(text_surf, (20, y_pos))
-                y_pos += 30
+            draw_help_screen(screen)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
@@ -352,10 +394,21 @@ def main():
     # 2. Initialize Pygame
     pygame.init()
     pygame.mixer.init()
+    
+    # 3. Set window caption and icon
     pygame.display.set_caption("Auramixer")
+    try:
+        # Load icon from the same directory as the script
+        icon_path = get_absolute_path("icon_64.png")
+        icon_surface = pygame.image.load(icon_path)
+        pygame.display.set_icon(icon_surface)
+    except Exception:
+        # Silently fail if icon is missing or corrupt
+        pass
+        
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
-    # 3. Main application loop (allows for reloading)
+    # 4. Main application loop (allows for reloading)
     while True:
         assets, media_error = load_all_assets()
         
@@ -367,7 +420,7 @@ def main():
             run_main_program(screen, assets)
             break # Main program finished, so exit the loop
 
-    # 4. Quit
+    # 5. Quit
     pygame.quit()
     sys.exit()
 
