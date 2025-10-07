@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pygame
 import os
 import sys
@@ -6,6 +8,7 @@ import atexit
 import platform
 import tkinter as tk
 from tkinter import messagebox
+import accessible_output2.outputs.auto
 
 # --- Configuration ---
 IS_PORTABLE = True
@@ -52,6 +55,30 @@ def setup_single_instance_lock():
     with open(lock_file_path, "w") as f:
         f.write(str(os.getpid()))
     atexit.register(lambda: os.remove(lock_file_path) if os.path.exists(lock_file_path) else None)
+    
+# a func that used to speak text with the running screen reader
+# do to pygame isn't accessible
+# we will use this to read the help text
+# Initialize the output handler once (global)
+_output_handler = accessible_output2.outputs.auto.Auto()
+
+def speak(text: str, interrupt: bool = True):
+    """
+    Speaks or brailles the given text using Accessible Output 2.
+
+    Parameters:
+        text (str): The text to speak or braille.
+        interrupt (bool, optional): Whether to interrupt current speech. Default is True.
+
+    Usage:
+        speak("Hello world")                # speaks and interrupts
+        speak("Next line", interrupt=False) # speaks without interrupting
+    """
+    if not isinstance(text, str):
+        raise TypeError("Text must be a string.")
+
+    # Accessible Output 2: speak the text
+    _output_handler.speak(text, interrupt=interrupt)
 
 # --- Path and Asset Management ---
 def get_resource_path(relative_path):
@@ -262,6 +289,19 @@ def run_main_program(screen, assets):
         for line in rendered_lines:
             panel.blit(line, ((panel_width - line.get_width()) // 2, current_y)); current_y += line.get_height()
         surface.blit(panel, ((surface.get_width() - panel_width) // 2, (surface.get_height() - panel_height) // 2))
+        speak("""
+Auramixer Controls
+--- General ---
+SHIFT: Toggle this help
+ESC: Quit Program
+R: Reload (on media error screen)
+--- Audio Control ---
+1-0 / Numpad 1-0: Play Music Track
+A-Z: Play Sound Effect
+SPACE: Stop All Music & Effects
+UP/DOWN Arrow: Adjust Music Volume
+LEFT/RIGHT Arrow: Adjust Effect Volume
+""")
 
     # --- Main Loop ---
     running = True
