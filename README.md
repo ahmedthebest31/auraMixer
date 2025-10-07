@@ -25,7 +25,7 @@ AuraMixer is a versatile application for Windows, macOS, and Linux that transfor
 
 Getting started with AuraMixer is easy. No installation is required!
 
-1.  **Download:** Grab the latest version for your operating system (Windows, macOS, or Linux) from the **[Releases page](https://github.com/your-username/auraMixer/releases)**.
+1.  **Download:** Grab the latest version for your operating system (Windows, macOS, or Linux) from the **[Releases page](https://github.com/ahmedthebest31/auraMixer/releases)**.
 2.  **Unzip:** Extract the contents of the downloaded `.zip` file to a folder of your choice.
 3.  **Add Your Media:** Inside the extracted folder, you will find three subfolders:
     *   `music/`: Place your background music files (e.g., `.mp3`, `.wav`) here.
