@@ -3,7 +3,7 @@
 *Your personal real-time audio and visual mixer for creating immersive ambiances.*
 
 
-<img src="icon.png" alt="auraMixer icon" width="450" />
+<img src="assets/icon.png" alt="auraMixer icon" width="450" />
 
 AuraMixer is a versatile application for Windows, macOS, and Linux that transforms your desktop into a dynamic sensory experience. Mix ambient background music, trigger sound effects on the fly, and enjoy a slideshow of your favorite visuals, all controlled seamlessly from your keyboard.
 

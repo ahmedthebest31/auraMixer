@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 # --- Configuration ---
-IS_PORTABLE = False
+IS_PORTABLE = True
 CROSSFADE_DURATION_MS = 2000 # Duration for fade-in and fade-out
 
 # --- Single Instance Check ---
@@ -82,7 +82,7 @@ def setup_asset_paths(is_portable):
     return paths, needs_user_notification
 
 def load_all_assets(asset_paths):
-    media_error = False
+    missing_asset_types = []
     backgrounds_path = asset_paths["backgrounds"]
     effects_path = asset_paths["effects"]
     music_path = asset_paths["music"]
@@ -100,9 +100,10 @@ def load_all_assets(asset_paths):
                 except pygame.error:
                     continue
     except OSError:
-        media_error = True
+        pass # Handled by the check below
+
     if not background_images:
-        media_error = True
+        missing_asset_types.append('backgrounds')
 
     # Load Effects
     effect_sounds = []
@@ -115,11 +116,12 @@ def load_all_assets(asset_paths):
                 except pygame.error:
                     continue
     except OSError:
-        media_error = True
-    if not effect_sounds:
-        media_error = True
+        pass
 
-    # Load Music as Sound objects for crossfading
+    if not effect_sounds:
+        missing_asset_types.append('effects')
+    
+    # Load Music
     music_sounds = []
     try:
         for f in os.listdir(music_path):
@@ -130,28 +132,36 @@ def load_all_assets(asset_paths):
                 except pygame.error:
                     continue
     except OSError:
-        media_error = True
+        pass
+
     if not music_sounds:
-        media_error = True
+        missing_asset_types.append('music')
         
     assets = {
         "backgrounds": background_images,
         "effects": effect_sounds,
         "music": music_sounds
     }
-    return assets, media_error
+    
+    # A fatal error only occurs if essential audio is missing.
+    is_fatal_error = 'music' in missing_asset_types or 'effects' in missing_asset_types
+    
+    return assets, is_fatal_error, missing_asset_types
 
 def show_media_error_screen(screen, asset_paths, is_portable):
     base_path = asset_paths['base']
     location_string = f"the folders next to the application.\n\nPath: {base_path}" if is_portable else f"the 'Auramixer' folder in your Documents.\n\nPath: {base_path}"
     root = tk.Tk()
     root.withdraw()
-    messagebox.showwarning("Auramixer - Media Missing", f"Auramixer is missing media files. Please add files to {location_string}\n\nThen press [R] to reload.")
+    messagebox.showwarning(
+        "Auramixer - Essential Files Missing", 
+        f"Essential audio files are missing from the 'music' or 'effects' folders. Please add audio files to {location_string}\n\nThen press [R] to reload."
+    )
     root.destroy()
 
     screen_width, screen_height = screen.get_size()
     error_font = pygame.font.Font(None, 48)
-    message_lines = ["Auramixer is missing media files.", "Please add files to the asset folders.", "", "Press [R] to reload or [ESC] to quit."]
+    message_lines = ["Essential audio files are missing.", "Please check the 'music' and 'effects' folders.", "", "Press [R] to reload or [ESC] to quit."]
     rendered_texts = [error_font.render(line, True, (255, 255, 255)) for line in message_lines]
     
     waiting_for_input = True
@@ -305,7 +315,7 @@ def main():
     
     pygame.display.set_caption("Auramixer")
     try:
-        icon_surface = pygame.image.load(get_resource_path("icon_64.png"))
+        icon_surface = pygame.image.load(get_resource_path("assets/icon_64.png"))
         pygame.display.set_icon(icon_surface)
     except Exception: pass
         
@@ -320,12 +330,32 @@ def main():
         root.destroy()
 
     while True:
-        assets, media_error = load_all_assets(asset_paths)
-        if media_error:
-            if not show_media_error_screen(screen, asset_paths, IS_PORTABLE): break
-        else:
-            run_main_program(screen, assets)
-            break
+        assets, is_fatal_error, missing_types = load_all_assets(asset_paths)
+        
+        # Handle fatal error (missing audio)
+        if is_fatal_error:
+            if not show_media_error_screen(screen, asset_paths, IS_PORTABLE): 
+                break # Quit if user chooses not to reload
+            else:
+                continue # Loop back to try loading assets again
+
+        # Handle non-fatal warning (missing backgrounds)
+        if 'backgrounds' in missing_types:
+            root = tk.Tk(); root.withdraw()
+            messagebox.showinfo("Auramixer - Backgrounds Missing", f"No images found in the 'backgrounds' folder. Using the default icon as a fallback.\n\nTo see your own images, add them to:\n{asset_paths['backgrounds']}")
+            root.destroy()
+            
+            # Add the fallback background programmatically
+            try:
+                fallback_img = pygame.image.load(get_resource_path("assets/icon_64.png")).convert()
+                assets['backgrounds'].append(fallback_img)
+            except Exception:
+                black_surface = pygame.Surface((800, 600)); black_surface.fill((0, 0, 0))
+                assets['backgrounds'].append(black_surface)
+
+        # If we reach here, we are good to go
+        run_main_program(screen, assets)
+        break # Exit the while loop after the program finishes normally
 
     pygame.quit()
     sys.exit()
