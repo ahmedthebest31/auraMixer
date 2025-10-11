@@ -86,7 +86,7 @@ def load_all_assets(asset_paths):
     backgrounds_path = asset_paths["backgrounds"]
     effects_path = asset_paths["effects"]
     music_path = asset_paths["music"]
-    valid_audio_ext = ('.wav', '.mp3', '.ogg')
+    valid_audio_ext = ('.wav', '.mp3', '.ogg', '.flac')
 
     # Load Backgrounds
     background_images = []
