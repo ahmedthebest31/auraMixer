@@ -1,0 +1,18 @@
+[project]
+name = "auramixer"
+version = "1.0.0"
+description = "Real-time audio and visual mixer for creating immersive ambiances"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Ahmed Samy El-khouly", email = "ahmedthebest31@gmail.com" }]
+dependencies = [
+    "pygame-ce>=2.5.8",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["auramixer"]

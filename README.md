@@ -53,6 +53,18 @@ AuraMixer is controlled entirely via your keyboard.
 
 ---
 
+## 🛠️ Development
+
+AuraMixer is a single-file Python application built with [Pygame - Community Edition](https://pypi.org/project/pygame-ce/) (the actively maintained fork that supports recent Python versions).
+
+1.  **Environment:** Python 3.10+ (recommended: latest stable, e.g. 3.14).
+2.  **Setup:** From the project root run `uv sync` (or `pip install -r requirements.txt`).
+3.  **Run:** `python auramixer.py`
+4.  **Test:** `python -m unittest test_auramixer -v`
+5.  **Build:** `pyinstaller auramixer.spec`
+
+---
+
 ## 🤝 Contributing
 
 Contributions to this project are welcome! If you find a bug, have an idea for an improvement, or want to contribute in any other way, please feel free to open an issue or submit a pull request.

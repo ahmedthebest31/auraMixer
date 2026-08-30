@@ -121,6 +121,73 @@ class TestAuramixer(unittest.TestCase):
         self.assertIn('effects', missing)
         self.assertNotIn('music', missing)
 
+    @patch('auramixer.platform.system', return_value='Linux')
+    @patch('os.kill')
+    def test_is_process_alive_non_windows_alive(self, mock_kill, mock_system):
+        """On non-Windows, a live PID reports alive via os.kill."""
+        self.assertTrue(auramixer.is_process_alive(1234))
+        mock_kill.assert_called_once_with(1234, 0)
+
+    @patch('auramixer.platform.system', return_value='Linux')
+    @patch('os.kill', side_effect=OSError)
+    def test_is_process_alive_non_windows_dead(self, mock_kill, mock_system):
+        """On non-Windows, a dead PID reports not alive."""
+        self.assertFalse(auramixer.is_process_alive(9999))
+
+    @patch('auramixer.platform.system', return_value='Windows')
+    def test_is_process_alive_windows_delegates(self, mock_system):
+        """On Windows, is_process_alive delegates to the Win32 helper."""
+        with patch.object(auramixer, '_is_windows_process_alive', return_value=True) as m:
+            self.assertTrue(auramixer.is_process_alive(999))
+        m.assert_called_once_with(999)
+
+        mock_system.return_value = 'Windows'
+        with patch.object(auramixer, '_is_windows_process_alive', return_value=False) as m:
+            self.assertFalse(auramixer.is_process_alive(999))
+        m.assert_called_once_with(999)
+
+    @patch('auramixer.ctypes.windll', create=True)
+    @patch('auramixer.ctypes.byref', side_effect=lambda x: x)
+    def test_windows_process_alive_helper(self, mock_byref, mock_windll):
+        """The Win32 helper returns True only for a live (STILL_ACTIVE) process."""
+        kernel32 = MagicMock()
+        mock_windll.kernel32 = kernel32
+
+        # OpenProcess fails -> not alive.
+        kernel32.OpenProcess.return_value = 0
+        self.assertFalse(auramixer._is_windows_process_alive(1))
+        kernel32.CloseHandle.assert_not_called()
+
+        # OpenProcess succeeds and exit code is STILL_ACTIVE (259) -> alive.
+        kernel32.OpenProcess.return_value = 111
+        kernel32.GetExitCodeProcess.side_effect = lambda handle, code: code.__setattr__('value', 259) or True
+        self.assertTrue(auramixer._is_windows_process_alive(1))
+        kernel32.CloseHandle.assert_called_once_with(111)
+
+        # Process has exited (exit code != 259) -> not alive.
+        kernel32.CloseHandle.reset_mock()
+        kernel32.OpenProcess.return_value = 222
+        kernel32.GetExitCodeProcess.side_effect = lambda handle, code: code.__setattr__('value', 1) or True
+        self.assertFalse(auramixer._is_windows_process_alive(1))
+        kernel32.CloseHandle.assert_called_once_with(222)
+
+    @patch('auramixer.platform.system', return_value='Linux')
+    @patch('os.path.expanduser', return_value='/home/user')
+    def test_get_documents_folder_fallback_non_windows(self, mock_expanduser, mock_system):
+        """On non-Windows, Documents resolves to ~/Documents."""
+        path = auramixer._get_documents_folder()
+        self.assertEqual(path, os.path.join('/home/user', 'Documents'))
+
+    @patch('auramixer.platform.system', return_value='Windows')
+    @patch('auramixer.ctypes.windll', create=True)
+    def test_get_documents_folder_windows_fallback_on_error(self, mock_windll, mock_system):
+        """If the Win32 known-folder call fails, fall back to ~/Documents."""
+        mock_windll.shell32.SHGetKnownFolderPath.side_effect = AttributeError
+        mock_windll.ole32 = type('O', (), {'CoTaskMemFree': lambda *a: None})()
+        with patch('os.path.expanduser', return_value='/home/user'):
+            path = auramixer._get_documents_folder()
+        self.assertEqual(path, os.path.join('/home/user', 'Documents'))
+
 if __name__ == '__main__':
     # This allows the test to be run from the command line.
     unittest.main()

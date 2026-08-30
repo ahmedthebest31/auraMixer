@@ -27,9 +27,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyInstaller
-*.spec
-
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -75,9 +72,6 @@ ehthumbs.db
 /music/.gitkeep
 documents/
 
-
-# help files 
-program_explanation_en.html
-program_explanation_ar.html
-program_explanation.html
-code_explanation.txt
+# AI/agent working files
+AGENTS.md
+CLAUDE.md
